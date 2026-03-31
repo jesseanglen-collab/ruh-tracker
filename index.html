@@ -105,7 +105,7 @@
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
-    .page-header { margin-bottom: 28px; }
+    .page-header { margin-bottom: 24px; }
     .page-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
     .subtitle { color: var(--text2); font-size: 14px; }
 
@@ -159,9 +159,7 @@
     .priority-action { font-size: 12px; color: var(--accent2); text-align: right; max-width: 260px; }
 
     /* ── Upcoming Meetings ── */
-    .upcoming-grid {
-      display: flex; flex-direction: column; gap: 8px;
-    }
+    .upcoming-grid { display: flex; flex-direction: column; gap: 8px; }
 
     .upcoming-item {
       background: var(--bg2);
@@ -172,44 +170,126 @@
       display: flex; align-items: center; gap: 16px;
     }
 
-    .upcoming-date {
-      font-size: 12px; color: var(--info); font-weight: 600;
-      min-width: 80px;
-    }
-
+    .upcoming-date { font-size: 12px; color: var(--info); font-weight: 600; min-width: 80px; }
     .upcoming-title { font-size: 13px; font-weight: 500; }
     .upcoming-company { font-size: 12px; color: var(--text2); }
 
-    /* ── Clients Table ── */
+    /* ── Filter Bar ── */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--bg2);
+      color: var(--text2);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+    }
+
+    .filter-pill:hover { border-color: var(--accent); color: var(--text); }
+    .filter-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .filter-divider {
+      width: 1px; height: 28px;
+      background: var(--border);
+      margin: 0 4px;
+    }
+
+    .custom-range {
+      display: none;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .custom-range.visible { display: flex; }
+
+    .date-input {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 5px 10px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .date-input:focus { outline: none; border-color: var(--accent); }
+
+    /* colorscheme for calendar popup */
+    .date-input::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+
+    .filter-label {
+      font-size: 12px;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+
+    .result-count {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text2);
+      white-space: nowrap;
+    }
+
+    /* ── Search row ── */
+    .table-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
     .search-input {
-      width: 360px;
+      flex: 1;
+      min-width: 220px;
+      max-width: 360px;
       background: var(--bg2); border: 1px solid var(--border);
       border-radius: 8px; color: var(--text);
-      padding: 8px 14px; font-size: 14px; margin-top: 8px;
+      padding: 8px 14px; font-size: 14px;
     }
 
     .search-input:focus { outline: none; border-color: var(--accent); }
 
-    #clients-table-wrap {
-      overflow-x: auto; border-radius: var(--radius);
+    /* ── Shared table styles ── */
+    .table-wrap {
+      overflow-x: auto;
+      border-radius: var(--radius);
       border: 1px solid var(--border);
       position: relative;
     }
 
-    #clients-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    .data-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 
-    #clients-table th {
+    .data-table th {
       background: var(--bg3); padding: 12px 14px; text-align: left;
       font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
       color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap;
     }
 
-    #clients-table td {
+    .data-table td {
       padding: 11px 14px;
       border-bottom: 1px solid var(--border); vertical-align: middle;
     }
 
-    /* Freeze first column (Client Name) */
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table tr:hover td { background: rgba(108,99,255,0.06); }
+
+    /* ── Freeze first data column (Client Name) on clients table ── */
     #clients-table th:nth-child(2),
     #clients-table td:nth-child(2) {
       position: sticky;
@@ -227,19 +307,51 @@
 
     #clients-table tr:hover td:nth-child(2) { background: #1e1e38; }
 
-    #clients-table tr:last-child td { border-bottom: none; }
-    #clients-table tr:hover td { background: rgba(108,99,255,0.06); }
+    /* ── Freeze date column on meetings table ── */
+    #meetings-table th:nth-child(1),
+    #meetings-table td:nth-child(1) {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      box-shadow: 2px 0 6px rgba(0,0,0,0.25);
+      min-width: 110px;
+    }
 
+    #meetings-table th:nth-child(1) {
+      background: var(--bg3);
+      z-index: 3;
+    }
+
+    #meetings-table tr:hover td:nth-child(1) { background: #1e1e38; }
+
+    /* Date badge in meetings */
+    .date-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: rgba(68,136,255,0.12);
+      color: var(--info);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .date-badge.recent { background: rgba(68,187,68,0.12); color: var(--good); }
+    .date-badge.today  { background: rgba(108,99,255,0.2); color: #a59fff; }
+
+    /* ── Badge styles ── */
     .badge {
       display: inline-block; padding: 2px 9px; border-radius: 20px;
       font-size: 11px; font-weight: 600;
     }
 
-    .badge-hot    { background: rgba(255,68,68,0.15);  color: var(--hot); }
-    .badge-warn   { background: rgba(255,153,0,0.15);  color: var(--warn); }
-    .badge-active { background: rgba(68,187,68,0.15);  color: var(--good); }
+    .badge-hot      { background: rgba(255,68,68,0.15);  color: var(--hot); }
+    .badge-warn     { background: rgba(255,153,0,0.15);  color: var(--warn); }
+    .badge-active   { background: rgba(68,187,68,0.15);  color: var(--good); }
     .badge-upcoming { background: rgba(68,136,255,0.15); color: var(--info); }
-    .badge-gray   { background: rgba(144,144,176,0.15); color: var(--text2); }
+    .badge-gray     { background: rgba(144,144,176,0.15); color: var(--text2); }
 
     /* ── Loading / Error ── */
     .loading-state {
@@ -300,6 +412,9 @@
       <li class="nav-item active" data-tab="dashboard">
         <span class="nav-icon">📊</span> <span>Dashboard</span>
       </li>
+      <li class="nav-item" data-tab="meetings">
+        <span class="nav-icon">📅</span> <span>Meetings</span>
+      </li>
       <li class="nav-item" data-tab="clients">
         <span class="nav-icon">👥</span> <span>Clients</span>
       </li>
@@ -316,7 +431,7 @@
   <!-- Main content -->
   <main id="content">
 
-    <!-- Dashboard Tab -->
+    <!-- ── Dashboard Tab ── -->
     <div id="tab-dashboard" class="tab-pane active">
       <div class="page-header">
         <h1>Dashboard</h1>
@@ -328,16 +443,74 @@
       </div>
     </div>
 
-    <!-- Clients Tab -->
+    <!-- ── Meetings Tab ── -->
+    <div id="tab-meetings" class="tab-pane">
+      <div class="page-header">
+        <h1>Meetings</h1>
+        <p class="subtitle">All client calls sorted by date — most recent first</p>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="filter-bar" id="meetings-filter-bar">
+        <button class="filter-pill active" data-filter="all"      onclick="setMeetingFilter('all',this)">All</button>
+        <button class="filter-pill"        data-filter="7d"       onclick="setMeetingFilter('7d',this)">Last 7 Days</button>
+        <button class="filter-pill"        data-filter="14d"      onclick="setMeetingFilter('14d',this)">Last 2 Weeks</button>
+        <button class="filter-pill"        data-filter="30d"      onclick="setMeetingFilter('30d',this)">This Month</button>
+        <div class="filter-divider"></div>
+        <button class="filter-pill"        data-filter="custom"   onclick="setMeetingFilter('custom',this)">📅 Custom Range</button>
+
+        <!-- Custom date range pickers (hidden until "Custom" is clicked) -->
+        <div class="custom-range" id="custom-range">
+          <span class="filter-label">From</span>
+          <input type="date" id="date-from" class="date-input" onchange="applyCustomFilter()" />
+          <span class="filter-label">To</span>
+          <input type="date" id="date-to"   class="date-input" onchange="applyCustomFilter()" />
+        </div>
+
+        <span class="result-count" id="meetings-count"></span>
+      </div>
+
+      <!-- Search within meetings -->
+      <div class="table-toolbar">
+        <input type="text" id="meetings-search" class="search-input"
+          placeholder="Search client, company, or title…"
+          oninput="applyMeetingFilters()" />
+      </div>
+
+      <div class="table-wrap">
+        <table class="data-table" id="meetings-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Client</th>
+              <th>Company</th>
+              <th>Meeting Title</th>
+              <th>Call #</th>
+              <th>Summary</th>
+              <th>Next Steps</th>
+              <th>Proposal?</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="meetings-tbody">
+            <tr><td colspan="9" class="empty-msg"><div class="spinner" style="margin:auto"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── Clients Tab ── -->
     <div id="tab-clients" class="tab-pane">
       <div class="page-header">
         <h1>Clients</h1>
+      </div>
+      <div class="table-toolbar">
         <input type="text" id="client-search" class="search-input"
           placeholder="Search by name, company, or email…"
           oninput="filterClients(this.value)" />
       </div>
-      <div id="clients-table-wrap">
-        <table id="clients-table">
+      <div class="table-wrap">
+        <table class="data-table" id="clients-table">
           <thead>
             <tr>
               <th>#</th><th>Client</th><th>Company</th><th>Email</th>
@@ -357,35 +530,34 @@
 
 <script>
 // ── CONFIG ────────────────────────────────────────────────────────────────────
-// Replace SHEETS_API_KEY with your Google Sheets API key
-// The sheet must be shared as "Anyone with the link can view"
-const SHEET_ID   = '1gOsHAXadupBdVhvxlz9IefRPSMEkd7ilglD3v9Nlw8E';
+const SHEET_ID       = '1gOsHAXadupBdVhvxlz9IefRPSMEkd7ilglD3v9Nlw8E';
 const SHEETS_API_KEY = window.SHEETS_API_KEY || 'AIzaSyBK1fORzGnBKvRrfjkObfz_0B71KvKzZik';
-const SHEET_RANGE = 'Sheet1!A1:P30';
-const REFRESH_MS  = 5 * 60 * 1000; // auto-refresh every 5 minutes
+const SHEET_RANGE    = 'Sheet1!A1:P30';
+const REFRESH_MS     = 5 * 60 * 1000;
 
-// ── Column mapping (0-indexed) — matches XLSX "Enterprise Call Tracker" sheet ─
+// ── Column mapping (0-indexed) ────────────────────────────────────────────────
 const COL = {
-  sno:            0,  // A - S.No
-  clientName:     1,  // B - Client Name
-  company:        2,  // C - Company
-  email:          3,  // D - Email
-  linkedin:       4,  // E - LinkedIn
-  website:        5,  // F - Website
-  callDate:       6,  // G - Call Date
-  callNum:        7,  // H - Call #
-  meetingTitle:   8,  // I - Meeting Title
-  summary:        9,  // J - Call Summary
-  nextAction:    10,  // K - Next Steps
-  proposalNeeded:11,  // L - Proposal Needed?
-  lukeAction:    12,  // M - Luke Action Required
-  followupStatus:13,  // N - Status
-  daysSince:     14,  // O - Days Since Last Contact
-  upcomingMtg:   15,  // P - (unused)
+  sno:            0,
+  clientName:     1,
+  company:        2,
+  email:          3,
+  linkedin:       4,
+  website:        5,
+  callDate:       6,
+  callNum:        7,
+  meetingTitle:   8,
+  summary:        9,
+  nextAction:    10,
+  proposalNeeded:11,
+  lukeAction:    12,
+  followupStatus:13,
+  daysSince:     14,
+  upcomingMtg:   15,
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let allRows = [];
+let allRows         = [];
+let activeMtgFilter = 'all';
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.getElementById('today-label').textContent =
@@ -417,32 +589,30 @@ async function loadData() {
       throw new Error(err?.error?.message || `HTTP ${res.status}`);
     }
     const data = await res.json();
-    const rawRows = (data.values || []).slice(1); // skip header row
+    const rawRows = (data.values || []).slice(1);
 
     allRows = rawRows
       .filter(r => r[COL.clientName])
-      .map(r => {
-        const clientName = r[COL.clientName] || '';
-        return {
-          sno:          r[COL.sno] || '',
-          callNum:      r[COL.callNum] || '',
-          callDate:     r[COL.callDate] || '',
-          meetingTitle: r[COL.meetingTitle] || '',
-          clientName,
-          company:      r[COL.company] || '',
-          email:        r[COL.email] || '',
-          website:      r[COL.website] || '',
-          attendees:    r[COL.attendees] || '',
-          summary:      r[COL.summary] || '',
-          nextAction:   r[COL.nextAction] || '',
-          fathomLink:   r[COL.fathomLink] || '',
-          status:       r[COL.followupStatus] || '',
-          proposalSent: r[COL.proposalSent] || '',
-          upcomingMtg:  r[COL.upcomingMtg] || '',
-        };
-      });
+      .map(r => ({
+        sno:           r[COL.sno]            || '',
+        callNum:       r[COL.callNum]         || '',
+        callDate:      r[COL.callDate]        || '',
+        meetingTitle:  r[COL.meetingTitle]    || '',
+        clientName:    r[COL.clientName]      || '',
+        company:       r[COL.company]         || '',
+        email:         r[COL.email]           || '',
+        website:       r[COL.website]         || '',
+        summary:       r[COL.summary]         || '',
+        nextAction:    r[COL.nextAction]      || '',
+        proposalNeeded:r[COL.proposalNeeded]  || '',
+        lukeAction:    r[COL.lukeAction]      || '',
+        status:        r[COL.followupStatus]  || '',
+        daysSince:     r[COL.daysSince]       || '',
+        upcomingMtg:   r[COL.upcomingMtg]    || '',
+      }));
 
     renderDashboard(allRows);
+    applyMeetingFilters();
     renderClientsTable(allRows);
     clearError();
     setStatus('live');
@@ -467,12 +637,9 @@ function setStatus(state) {
 
 // ── Dashboard rendering ───────────────────────────────────────────────────────
 function renderDashboard(rows) {
-  const today = new Date();
-  today.setHours(0,0,0,0);
-
   const hot       = rows.filter(r => r.status === 'Hot Lead');
   const followup  = rows.filter(r => r.status === 'Follow-up needed');
-  const proposals = rows.filter(r => (r.proposalSent || '').toLowerCase() === 'yes' && r.status !== 'Upcoming');
+  const proposals = rows.filter(r => (r.proposalNeeded || '').toLowerCase() === 'yes' && r.status !== 'Upcoming');
   const upcoming  = rows.filter(r => r.status === 'Upcoming');
 
   const priorities = [
@@ -480,7 +647,6 @@ function renderDashboard(rows) {
     ...followup.map(r => ({ ...r, ptype: 'warn' })),
   ];
 
-  // Deduplicate by clientName
   const seen = new Set();
   const dedupedPriorities = priorities.filter(r => {
     if (seen.has(r.clientName)) return false;
@@ -542,6 +708,133 @@ function renderDashboard(rows) {
   `;
 }
 
+// ── Meeting filter state ───────────────────────────────────────────────────────
+function setMeetingFilter(filter, btn) {
+  activeMtgFilter = filter;
+
+  // update pill highlights
+  document.querySelectorAll('#meetings-filter-bar .filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+
+  // show/hide custom range
+  const customRange = document.getElementById('custom-range');
+  if (filter === 'custom') {
+    customRange.classList.add('visible');
+  } else {
+    customRange.classList.remove('visible');
+  }
+
+  applyMeetingFilters();
+}
+
+function applyMeetingFilters() {
+  const today    = new Date(); today.setHours(0,0,0,0);
+  const searchQ  = (document.getElementById('meetings-search')?.value || '').toLowerCase();
+
+  let filtered = [...allRows];
+
+  // ── Date range filter ──
+  if (activeMtgFilter === '7d') {
+    const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 7);
+    filtered = filtered.filter(r => parseDate(r.callDate) >= cutoff);
+  } else if (activeMtgFilter === '14d') {
+    const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 14);
+    filtered = filtered.filter(r => parseDate(r.callDate) >= cutoff);
+  } else if (activeMtgFilter === '30d') {
+    const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 30);
+    filtered = filtered.filter(r => parseDate(r.callDate) >= cutoff);
+  } else if (activeMtgFilter === 'custom') {
+    const fromVal = document.getElementById('date-from')?.value;
+    const toVal   = document.getElementById('date-to')?.value;
+    if (fromVal) {
+      const fromDate = new Date(fromVal); fromDate.setHours(0,0,0,0);
+      filtered = filtered.filter(r => parseDate(r.callDate) >= fromDate);
+    }
+    if (toVal) {
+      const toDate = new Date(toVal); toDate.setHours(23,59,59,999);
+      filtered = filtered.filter(r => parseDate(r.callDate) <= toDate);
+    }
+  }
+
+  // ── Search filter ──
+  if (searchQ) {
+    filtered = filtered.filter(r =>
+      (r.clientName   || '').toLowerCase().includes(searchQ) ||
+      (r.company      || '').toLowerCase().includes(searchQ) ||
+      (r.meetingTitle || '').toLowerCase().includes(searchQ) ||
+      (r.email        || '').toLowerCase().includes(searchQ)
+    );
+  }
+
+  // ── Sort by date descending (most recent first) ──
+  filtered.sort((a, b) => {
+    const da = parseDate(a.callDate);
+    const db = parseDate(b.callDate);
+    if (!da && !db) return 0;
+    if (!da) return 1;
+    if (!db) return -1;
+    return db - da;
+  });
+
+  // update count
+  const countEl = document.getElementById('meetings-count');
+  if (countEl) countEl.textContent = `${filtered.length} meeting${filtered.length !== 1 ? 's' : ''}`;
+
+  renderMeetingsTable(filtered);
+}
+
+// ── Meetings table rendering ──────────────────────────────────────────────────
+function renderMeetingsTable(rows) {
+  const tbody = document.getElementById('meetings-tbody');
+  if (!tbody) return;
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">No meetings found for this period.</td></tr>';
+    return;
+  }
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const sevenDaysAgo = new Date(today); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  tbody.innerHTML = rows.map(r => {
+    const badgeClass = {
+      'Hot Lead':          'badge-hot',
+      'Follow-up needed':  'badge-warn',
+      'Follow-up':         'badge-warn',
+      'Active':            'badge-active',
+      'Upcoming':          'badge-upcoming',
+    }[r.status] || 'badge-gray';
+
+    // colour the date badge
+    const d = parseDate(r.callDate);
+    let dateBadgeClass = '';
+    if (d) {
+      if (d >= today) dateBadgeClass = 'today';
+      else if (d >= sevenDaysAgo) dateBadgeClass = 'recent';
+    }
+
+    const proposalBadge = (r.proposalNeeded || '').toLowerCase() === 'yes'
+      ? `<span class="badge badge-hot">Yes</span>`
+      : `<span class="badge badge-gray">No</span>`;
+
+    return `<tr>
+      <td><span class="date-badge ${dateBadgeClass}">${esc(r.callDate) || '—'}</span></td>
+      <td><strong>${esc(r.clientName)}</strong><br><span style="color:var(--text2);font-size:11px">${esc(r.email)}</span></td>
+      <td>${esc(r.company)}</td>
+      <td style="font-size:12px;color:var(--text2);max-width:180px">${esc(r.meetingTitle)}</td>
+      <td style="color:var(--text2)">${esc(r.callNum)}</td>
+      <td style="font-size:12px;max-width:240px;color:var(--text2)">${esc(r.summary)}</td>
+      <td style="font-size:12px;max-width:200px;color:var(--accent2)">${esc(r.nextAction)}</td>
+      <td>${proposalBadge}</td>
+      <td><span class="badge ${badgeClass}">${esc(r.status) || '—'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Custom range shortcut ─────────────────────────────────────────────────────
+function applyCustomFilter() {
+  if (activeMtgFilter === 'custom') applyMeetingFilters();
+}
+
 // ── Clients table ─────────────────────────────────────────────────────────────
 function renderClientsTable(rows) {
   const tbody = document.getElementById('clients-tbody');
@@ -552,10 +845,11 @@ function renderClientsTable(rows) {
 
   tbody.innerHTML = rows.map(r => {
     const badgeClass = {
-      'Hot Lead':         'badge-hot',
-      'Follow-up needed': 'badge-warn',
-      'Active':           'badge-active',
-      'Upcoming':         'badge-upcoming',
+      'Hot Lead':          'badge-hot',
+      'Follow-up needed':  'badge-warn',
+      'Follow-up':         'badge-warn',
+      'Active':            'badge-active',
+      'Upcoming':          'badge-upcoming',
     }[r.status] || 'badge-gray';
 
     return `<tr>
@@ -569,7 +863,7 @@ function renderClientsTable(rows) {
       <td style="font-size:12px;max-width:240px;color:var(--text2)">${esc(r.summary)}</td>
       <td style="font-size:12px;max-width:200px;color:var(--accent2)">${esc(r.nextAction)}</td>
       <td><span class="badge ${badgeClass}">${esc(r.status) || '—'}</span></td>
-      <td style="color:var(--text2)">${esc(r.upcomingMtg) || '—'}</td>
+      <td style="color:var(--text2)">${esc(r.daysSince) || '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -584,6 +878,13 @@ function filterClients(q) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+function parseDate(str) {
+  if (!str) return null;
+  // Handles "2026-03-25", "25/03/2026", "March 25, 2026"
+  const d = new Date(str);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 function switchTab(tab) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -597,9 +898,7 @@ function showConfigBanner() {
       <h3>🔧 Setup Required</h3>
       <p>
         To show live data, add your Google Sheets API key to <code>index.html</code>
-        (replace <code>REPLACE_WITH_YOUR_API_KEY</code> near the top of the &lt;script&gt;)
         and make sure the Google Sheet is shared as <strong>"Anyone with the link can view"</strong>.
-        Then redeploy to Vercel.
       </p>
     </div>`;
 }
