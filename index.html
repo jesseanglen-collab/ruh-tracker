@@ -342,27 +342,27 @@
 // The sheet must be shared as "Anyone with the link can view"
 const SHEET_ID   = '1gOsHAXadupBdVhvxlz9IefRPSMEkd7ilglD3v9Nlw8E';
 const SHEETS_API_KEY = window.SHEETS_API_KEY || 'AIzaSyBK1fORzGnBKvRrfjkObfz_0B71KvKzZik';
-const SHEET_RANGE = 'Calls!A1:P100';
+const SHEET_RANGE = 'Sheet1!A1:P30';
 const REFRESH_MS  = 5 * 60 * 1000; // auto-refresh every 5 minutes
 
-// ── Column mapping (0-indexed) ────────────────────────────────────────────────
+// ── Column mapping (0-indexed) — matches XLSX "Enterprise Call Tracker" sheet ─
 const COL = {
-  sno:           0,  // A - Sr.No
-  applicable:    1,  // B - Applicable/NA
-  callNum:       2,  // C - Call #
-  callDate:      3,  // D - Date & Time
-  meetingTitle:  4,  // E - Meeting Title
-  clientName:    5,  // F - Client Name
-  company:       6,  // G - Company
-  email:         7,  // H - Client Email(s)
-  website:       8,  // I - Website
-  attendees:     9,  // J - All Attendees
-  summary:      10,  // K - Brief Summary
-  nextAction:   11,  // L - Next Action
-  fathomLink:   12,  // M - Fathom Link
-  followupStatus: 13, // N - Follow-up Status
-  proposalSent: 14,  // O - Proposal Deck Sent
-  upcomingMtg:  15,  // P - Upcoming Meeting
+  sno:            0,  // A - S.No
+  clientName:     1,  // B - Client Name
+  company:        2,  // C - Company
+  email:          3,  // D - Email
+  linkedin:       4,  // E - LinkedIn
+  website:        5,  // F - Website
+  callDate:       6,  // G - Call Date
+  callNum:        7,  // H - Call #
+  meetingTitle:   8,  // I - Meeting Title
+  summary:        9,  // J - Call Summary
+  nextAction:    10,  // K - Next Steps
+  proposalNeeded:11,  // L - Proposal Needed?
+  lukeAction:    12,  // M - Luke Action Required
+  followupStatus:13,  // N - Status
+  daysSince:     14,  // O - Days Since Last Contact
+  upcomingMtg:   15,  // P - (unused)
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -403,11 +403,7 @@ async function loadData() {
     allRows = rawRows
       .filter(r => r[COL.clientName])
       .map(r => {
-        // Clean client name: "email@x.com, Real Name" → "Real Name"
-        const rawName = r[COL.clientName] || '';
-        const clientName = rawName.includes('@') && rawName.includes(',')
-          ? rawName.split(',').map(s => s.trim()).find(s => !s.includes('@')) || rawName
-          : rawName;
+        const clientName = r[COL.clientName] || '';
         return {
           sno:          r[COL.sno] || '',
           callNum:      r[COL.callNum] || '',
@@ -455,18 +451,14 @@ function renderDashboard(rows) {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  const isOverdue    = r => r.status === 'Overdue';
-  const isFollowup   = r => r.status === 'Follow-up Pending' || r.status === 'Follow-up needed';
-  const needsProposal = r => !r.proposalSent.toLowerCase().startsWith('yes') && r.status !== '' && r.upcomingMtg === '';
-
-  const hot       = rows.filter(isOverdue);
-  const followup  = rows.filter(isFollowup);
-  const proposals = rows.filter(needsProposal);
-  const upcoming  = rows.filter(r => r.upcomingMtg && r.upcomingMtg.trim());
+  const hot       = rows.filter(r => r.status === 'Hot Lead');
+  const followup  = rows.filter(r => r.status === 'Follow-up needed');
+  const proposals = rows.filter(r => (r.proposalSent || '').toLowerCase() === 'yes' && r.status !== 'Upcoming');
+  const upcoming  = rows.filter(r => r.status === 'Upcoming');
 
   const priorities = [
     ...hot.map(r => ({ ...r, ptype: 'hot' })),
-    ...followup.slice(0, 5).map(r => ({ ...r, ptype: 'warn' })),
+    ...followup.map(r => ({ ...r, ptype: 'warn' })),
   ];
 
   // Deduplicate by clientName
@@ -485,11 +477,11 @@ function renderDashboard(rows) {
       </div>
       <div class="stat-card hot">
         <div class="stat-value">${hot.length}</div>
-        <div class="stat-label">Overdue</div>
+        <div class="stat-label">Hot Leads</div>
       </div>
       <div class="stat-card warn">
         <div class="stat-value">${followup.length}</div>
-        <div class="stat-label">Follow-up Pending</div>
+        <div class="stat-label">Follow-up Needed</div>
       </div>
       <div class="stat-card info">
         <div class="stat-value">${proposals.length}</div>
@@ -541,8 +533,7 @@ function renderClientsTable(rows) {
 
   tbody.innerHTML = rows.map(r => {
     const badgeClass = {
-      'Overdue':          'badge-hot',
-      'Follow-up Pending':'badge-warn',
+      'Hot Lead':         'badge-hot',
       'Follow-up needed': 'badge-warn',
       'Active':           'badge-active',
       'Upcoming':         'badge-upcoming',
