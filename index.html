@@ -402,23 +402,30 @@ async function loadData() {
 
     allRows = rawRows
       .filter(r => r[COL.clientName])
-      .map(r => ({
-        sno:          r[COL.sno] || '',
-        callNum:      r[COL.callNum] || '',
-        callDate:     r[COL.callDate] || '',
-        meetingTitle: r[COL.meetingTitle] || '',
-        clientName:   r[COL.clientName] || '',
-        company:      r[COL.company] || '',
-        email:        r[COL.email] || '',
-        website:      r[COL.website] || '',
-        attendees:    r[COL.attendees] || '',
-        summary:      r[COL.summary] || '',
-        nextAction:   r[COL.nextAction] || '',
-        fathomLink:   r[COL.fathomLink] || '',
-        status:       r[COL.followupStatus] || '',
-        proposalSent: r[COL.proposalSent] || '',
-        upcomingMtg:  r[COL.upcomingMtg] || '',
-      }));
+      .map(r => {
+        // Clean client name: "email@x.com, Real Name" → "Real Name"
+        const rawName = r[COL.clientName] || '';
+        const clientName = rawName.includes('@') && rawName.includes(',')
+          ? rawName.split(',').map(s => s.trim()).find(s => !s.includes('@')) || rawName
+          : rawName;
+        return {
+          sno:          r[COL.sno] || '',
+          callNum:      r[COL.callNum] || '',
+          callDate:     r[COL.callDate] || '',
+          meetingTitle: r[COL.meetingTitle] || '',
+          clientName,
+          company:      r[COL.company] || '',
+          email:        r[COL.email] || '',
+          website:      r[COL.website] || '',
+          attendees:    r[COL.attendees] || '',
+          summary:      r[COL.summary] || '',
+          nextAction:   r[COL.nextAction] || '',
+          fathomLink:   r[COL.fathomLink] || '',
+          status:       r[COL.followupStatus] || '',
+          proposalSent: r[COL.proposalSent] || '',
+          upcomingMtg:  r[COL.upcomingMtg] || '',
+        };
+      });
 
     renderDashboard(allRows);
     renderClientsTable(allRows);
@@ -448,14 +455,17 @@ function renderDashboard(rows) {
   const today = new Date();
   today.setHours(0,0,0,0);
 
-  const hot       = rows.filter(r => r.status === 'Hot Lead');
-  const followup  = rows.filter(r => r.status === 'Follow-up needed');
-  const proposals = rows.filter(r => !r.proposalSent && r.status !== 'Upcoming' && r.status !== '');
-  const upcoming  = rows.filter(r => r.status === 'Upcoming' || (r.upcomingMtg && r.upcomingMtg.trim()));
+  const isOverdue    = r => r.status === 'Overdue';
+  const isFollowup   = r => r.status === 'Follow-up Pending' || r.status === 'Follow-up needed';
+  const needsProposal = r => !r.proposalSent.toLowerCase().startsWith('yes') && r.status !== '' && r.upcomingMtg === '';
+
+  const hot       = rows.filter(isOverdue);
+  const followup  = rows.filter(isFollowup);
+  const proposals = rows.filter(needsProposal);
+  const upcoming  = rows.filter(r => r.upcomingMtg && r.upcomingMtg.trim());
 
   const priorities = [
     ...hot.map(r => ({ ...r, ptype: 'hot' })),
-    ...rows.filter(r => !r.proposalSent && r.status === 'Hot Lead').map(r => ({ ...r, ptype: 'hot' })),
     ...followup.slice(0, 5).map(r => ({ ...r, ptype: 'warn' })),
   ];
 
@@ -475,11 +485,11 @@ function renderDashboard(rows) {
       </div>
       <div class="stat-card hot">
         <div class="stat-value">${hot.length}</div>
-        <div class="stat-label">Hot Leads</div>
+        <div class="stat-label">Overdue</div>
       </div>
       <div class="stat-card warn">
         <div class="stat-value">${followup.length}</div>
-        <div class="stat-label">Follow-up Needed</div>
+        <div class="stat-label">Follow-up Pending</div>
       </div>
       <div class="stat-card info">
         <div class="stat-value">${proposals.length}</div>
@@ -531,7 +541,8 @@ function renderClientsTable(rows) {
 
   tbody.innerHTML = rows.map(r => {
     const badgeClass = {
-      'Hot Lead':         'badge-hot',
+      'Overdue':          'badge-hot',
+      'Follow-up Pending':'badge-warn',
       'Follow-up needed': 'badge-warn',
       'Active':           'badge-active',
       'Upcoming':         'badge-upcoming',
