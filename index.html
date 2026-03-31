@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ruh.ai — Enterprise Meeting Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --bg2: #1a1a2e;
+      --bg3: #16213e;
+      --border: #2a2a4a;
+      --accent: #6c63ff;
+      --accent2: #4fc3f7;
+      --hot: #ff4444;
+      --warn: #ff9900;
+      --good: #44bb44;
+      --info: #4488ff;
+      --text: #e8e8f0;
+      --text2: #9090b0;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #app { display: flex; height: 100vh; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 220px;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 20px 0;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 16px; color: #fff;
+    }
+
+    .logo-text { font-size: 14px; font-weight: 600; color: var(--text); }
+
+    .nav-links { list-style: none; padding: 16px 10px; flex: 1; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 8px; cursor: pointer;
+      font-size: 14px; color: var(--text2); transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: var(--accent); color: #fff; }
+    .nav-icon { font-size: 16px; }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text2);
+    }
+
+    .refresh-info { display: flex; flex-direction: column; gap: 2px; }
+    .refresh-info small { font-size: 10px; color: var(--text2); opacity: 0.7; }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--warn); flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.live { background: var(--good); box-shadow: 0 0 6px var(--good); }
+    .status-dot.error { background: var(--hot); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── Main Content ── */
+    #content { flex: 1; overflow-y: auto; padding: 32px; }
+
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+    .subtitle { color: var(--text2); font-size: 14px; }
+
+    /* ── Stats Grid ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px; text-align: center;
+    }
+
+    .stat-card.hot { border-color: var(--hot); }
+    .stat-card.warn { border-color: var(--warn); }
+    .stat-card.info { border-color: var(--info); }
+
+    .stat-value { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-card.hot .stat-value { color: var(--hot); }
+    .stat-card.warn .stat-value { color: var(--warn); }
+    .stat-card.info .stat-value { color: var(--info); }
+
+    /* ── Priority List ── */
+    .section-title {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em;
+      color: var(--text2); margin-bottom: 12px; font-weight: 600;
+    }
+
+    .priority-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .priority-item {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    .priority-item.hot { border-left-color: var(--hot); }
+    .priority-item.warn { border-left-color: var(--warn); }
+
+    .priority-name { font-weight: 600; font-size: 14px; }
+    .priority-meta { font-size: 12px; color: var(--text2); margin-top: 2px; }
+    .priority-action { font-size: 12px; color: var(--accent2); text-align: right; max-width: 260px; }
+
+    /* ── Upcoming Meetings ── */
+    .upcoming-grid {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+
+    .upcoming-item {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--info);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 16px;
+    }
+
+    .upcoming-date {
+      font-size: 12px; color: var(--info); font-weight: 600;
+      min-width: 80px;
+    }
+
+    .upcoming-title { font-size: 13px; font-weight: 500; }
+    .upcoming-company { font-size: 12px; color: var(--text2); }
+
+    /* ── Clients Table ── */
+    .search-input {
+      width: 360px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 8px; color: var(--text);
+      padding: 8px 14px; font-size: 14px; margin-top: 8px;
+    }
+
+    .search-input:focus { outline: none; border-color: var(--accent); }
+
+    #clients-table-wrap {
+      overflow-x: auto; border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    #clients-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    #clients-table th {
+      background: var(--bg3); padding: 12px 14px; text-align: left;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--text2); border-bottom: 1px solid var(--border); white-space: nowrap;
+    }
+
+    #clients-table td {
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border); vertical-align: middle;
+    }
+
+    #clients-table tr:last-child td { border-bottom: none; }
+    #clients-table tr:hover td { background: rgba(108,99,255,0.06); }
+
+    .badge {
+      display: inline-block; padding: 2px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    .badge-hot    { background: rgba(255,68,68,0.15);  color: var(--hot); }
+    .badge-warn   { background: rgba(255,153,0,0.15);  color: var(--warn); }
+    .badge-active { background: rgba(68,187,68,0.15);  color: var(--good); }
+    .badge-upcoming { background: rgba(68,136,255,0.15); color: var(--info); }
+    .badge-gray   { background: rgba(144,144,176,0.15); color: var(--text2); }
+
+    /* ── Loading / Error ── */
+    .loading-state {
+      display: flex; align-items: center; justify-content: center;
+      height: 200px; color: var(--text2); font-size: 14px; gap: 10px;
+    }
+
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid var(--border);
+      border-top-color: var(--accent); border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-banner {
+      background: rgba(255,68,68,0.1); border: 1px solid rgba(255,68,68,0.3);
+      border-radius: var(--radius); padding: 14px 18px; margin-bottom: 20px;
+      font-size: 13px; color: #ff8888;
+    }
+
+    .empty-msg { color: var(--text2); font-size: 13px; padding: 20px; text-align: center; }
+
+    /* ── Config Banner ── */
+    .config-banner {
+      background: rgba(108,99,255,0.12); border: 1px solid rgba(108,99,255,0.4);
+      border-radius: var(--radius); padding: 20px 24px; margin-bottom: 24px;
+    }
+
+    .config-banner h3 { font-size: 14px; margin-bottom: 8px; color: var(--accent2); }
+    .config-banner p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .config-banner code {
+      background: var(--bg3); padding: 2px 6px; border-radius: 4px;
+      font-family: monospace; font-size: 12px; color: var(--accent2);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      #sidebar { width: 60px; }
+      .logo-text, .nav-item span:not(.nav-icon), .sidebar-footer .refresh-info { display: none; }
+      .logo { justify-content: center; padding: 0 0 24px; }
+      .nav-item { justify-content: center; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      #content { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Sidebar -->
+  <nav id="sidebar">
+    <div class="logo">
+      <div class="logo-icon">R</div>
+      <span class="logo-text">Ruh.ai Tracker</span>
+    </div>
+    <ul class="nav-links">
+      <li class="nav-item active" data-tab="dashboard">
+        <span class="nav-icon">📊</span> <span>Dashboard</span>
+      </li>
+      <li class="nav-item" data-tab="clients">
+        <span class="nav-icon">👥</span> <span>Clients</span>
+      </li>
+    </ul>
+    <div class="sidebar-footer">
+      <div class="status-dot" id="status-dot"></div>
+      <div class="refresh-info">
+        <span id="status-label">Loading…</span>
+        <small id="last-updated"></small>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main content -->
+  <main id="content">
+
+    <!-- Dashboard Tab -->
+    <div id="tab-dashboard" class="tab-pane active">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p class="subtitle" id="today-label"></p>
+      </div>
+      <div id="error-container"></div>
+      <div id="dashboard-body">
+        <div class="loading-state"><div class="spinner"></div> Loading live data…</div>
+      </div>
+    </div>
+
+    <!-- Clients Tab -->
+    <div id="tab-clients" class="tab-pane">
+      <div class="page-header">
+        <h1>Clients</h1>
+        <input type="text" id="client-search" class="search-input"
+          placeholder="Search by name, company, or email…"
+          oninput="filterClients(this.value)" />
+      </div>
+      <div id="clients-table-wrap">
+        <table id="clients-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Client</th><th>Company</th><th>Email</th>
+              <th>Last Call</th><th>Meeting Title</th><th>Call #</th>
+              <th>Summary</th><th>Next Steps</th><th>Status</th><th>Days</th>
+            </tr>
+          </thead>
+          <tbody id="clients-tbody">
+            <tr><td colspan="11" class="empty-msg"><div class="spinner" style="margin:auto"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+// Replace SHEETS_API_KEY with your Google Sheets API key
+// The sheet must be shared as "Anyone with the link can view"
+const SHEET_ID   = '1gOsHAXadupBdVhvxlz9IefRPSMEkd7ilglD3v9Nlw8E';
+const SHEETS_API_KEY = window.SHEETS_API_KEY || 'AIzaSyBK1fORzGnBKvRrfjkObfz_0B71KvKzZik';
+const SHEET_RANGE = 'A1:P100';
+const REFRESH_MS  = 5 * 60 * 1000; // auto-refresh every 5 minutes
+
+// ── Column mapping (0-indexed) ────────────────────────────────────────────────
+const COL = {
+  sno:           0,  // A - Sr.No
+  applicable:    1,  // B - Applicable/NA
+  callNum:       2,  // C - Call #
+  callDate:      3,  // D - Date & Time
+  meetingTitle:  4,  // E - Meeting Title
+  clientName:    5,  // F - Client Name
+  company:       6,  // G - Company
+  email:         7,  // H - Client Email(s)
+  website:       8,  // I - Website
+  attendees:     9,  // J - All Attendees
+  summary:      10,  // K - Brief Summary
+  nextAction:   11,  // L - Next Action
+  fathomLink:   12,  // M - Fathom Link
+  followupStatus: 13, // N - Follow-up Status
+  proposalSent: 14,  // O - Proposal Deck Sent
+  upcomingMtg:  15,  // P - Upcoming Meeting
+};
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let allRows = [];
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.getElementById('today-label').textContent =
+  new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => switchTab(item.dataset.tab));
+});
+
+loadData();
+setInterval(loadData, REFRESH_MS);
+
+// ── Data loading ──────────────────────────────────────────────────────────────
+async function loadData() {
+  setStatus('loading');
+
+  if (SHEETS_API_KEY === 'REPLACE_WITH_YOUR_API_KEY') {
+    showConfigBanner();
+    setStatus('error');
+    return;
+  }
+
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_RANGE}?key=${SHEETS_API_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    }
+    const data = await res.json();
+    const rawRows = (data.values || []).slice(1); // skip header row
+
+    allRows = rawRows
+      .filter(r => r[COL.clientName])
+      .map(r => ({
+        sno:          r[COL.sno] || '',
+        callNum:      r[COL.callNum] || '',
+        callDate:     r[COL.callDate] || '',
+        meetingTitle: r[COL.meetingTitle] || '',
+        clientName:   r[COL.clientName] || '',
+        company:      r[COL.company] || '',
+        email:        r[COL.email] || '',
+        website:      r[COL.website] || '',
+        attendees:    r[COL.attendees] || '',
+        summary:      r[COL.summary] || '',
+        nextAction:   r[COL.nextAction] || '',
+        fathomLink:   r[COL.fathomLink] || '',
+        status:       r[COL.followupStatus] || '',
+        proposalSent: r[COL.proposalSent] || '',
+        upcomingMtg:  r[COL.upcomingMtg] || '',
+      }));
+
+    renderDashboard(allRows);
+    renderClientsTable(allRows);
+    clearError();
+    setStatus('live');
+    document.getElementById('last-updated').textContent =
+      'Updated ' + new Date().toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+
+  } catch(e) {
+    showError(`Failed to load data: ${e.message}. Check API key and sheet permissions.`);
+    setStatus('error');
+  }
+}
+
+// ── Status indicator ──────────────────────────────────────────────────────────
+function setStatus(state) {
+  const dot   = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+  dot.className = 'status-dot';
+  if (state === 'live')    { dot.classList.add('live');  label.textContent = 'Live'; }
+  if (state === 'loading') { label.textContent = 'Loading…'; }
+  if (state === 'error')   { dot.classList.add('error'); label.textContent = 'Error'; }
+}
+
+// ── Dashboard rendering ───────────────────────────────────────────────────────
+function renderDashboard(rows) {
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const hot       = rows.filter(r => r.status === 'Hot Lead');
+  const followup  = rows.filter(r => r.status === 'Follow-up needed');
+  const proposals = rows.filter(r => !r.proposalSent && r.status !== 'Upcoming' && r.status !== '');
+  const upcoming  = rows.filter(r => r.status === 'Upcoming' || (r.upcomingMtg && r.upcomingMtg.trim()));
+
+  const priorities = [
+    ...hot.map(r => ({ ...r, ptype: 'hot' })),
+    ...rows.filter(r => !r.proposalSent && r.status === 'Hot Lead').map(r => ({ ...r, ptype: 'hot' })),
+    ...followup.slice(0, 5).map(r => ({ ...r, ptype: 'warn' })),
+  ];
+
+  // Deduplicate by clientName
+  const seen = new Set();
+  const dedupedPriorities = priorities.filter(r => {
+    if (seen.has(r.clientName)) return false;
+    seen.add(r.clientName);
+    return true;
+  }).slice(0, 8);
+
+  document.getElementById('dashboard-body').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">${rows.length}</div>
+        <div class="stat-label">Total Clients</div>
+      </div>
+      <div class="stat-card hot">
+        <div class="stat-value">${hot.length}</div>
+        <div class="stat-label">Hot Leads</div>
+      </div>
+      <div class="stat-card warn">
+        <div class="stat-value">${followup.length}</div>
+        <div class="stat-label">Follow-up Needed</div>
+      </div>
+      <div class="stat-card info">
+        <div class="stat-value">${proposals.length}</div>
+        <div class="stat-label">Proposals Pending</div>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-bottom:12px">Priority Actions</div>
+    <div class="priority-list" style="margin-bottom:32px">
+      ${dedupedPriorities.length === 0
+        ? '<p class="empty-msg">All caught up!</p>'
+        : dedupedPriorities.map(r => `
+          <div class="priority-item ${r.ptype}">
+            <div>
+              <div class="priority-name">${esc(r.clientName)}
+                <span style="color:var(--text2);font-weight:400">(${esc(r.company)})</span>
+              </div>
+              <div class="priority-meta">
+                ${esc(r.email)} · Last call: ${esc(r.callDate) || '—'} · ${esc(r.callNum)}
+              </div>
+            </div>
+            <div class="priority-action">${esc(r.nextAction || '')}</div>
+          </div>`).join('')
+      }
+    </div>
+
+    ${upcoming.length > 0 ? `
+    <div class="section-title" style="margin-bottom:12px">Upcoming Meetings</div>
+    <div class="upcoming-grid">
+      ${upcoming.map(r => `
+        <div class="upcoming-item">
+          <div class="upcoming-date">${esc(r.callDate)}</div>
+          <div>
+            <div class="upcoming-title">${esc(r.meetingTitle || r.upcomingMtg)}</div>
+            <div class="upcoming-company">${esc(r.clientName)} · ${esc(r.company)}</div>
+          </div>
+        </div>`).join('')}
+    </div>` : ''}
+  `;
+}
+
+// ── Clients table ─────────────────────────────────────────────────────────────
+function renderClientsTable(rows) {
+  const tbody = document.getElementById('clients-tbody');
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">No clients found.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const badgeClass = {
+      'Hot Lead':         'badge-hot',
+      'Follow-up needed': 'badge-warn',
+      'Active':           'badge-active',
+      'Upcoming':         'badge-upcoming',
+    }[r.status] || 'badge-gray';
+
+    return `<tr>
+      <td style="color:var(--text2)">${esc(r.sno)}</td>
+      <td><strong>${esc(r.clientName)}</strong></td>
+      <td>${esc(r.company)}</td>
+      <td style="font-family:monospace;font-size:11px">${esc(r.email)}</td>
+      <td>${esc(r.callDate) || '—'}</td>
+      <td style="color:var(--text2);font-size:12px;max-width:180px">${esc(r.meetingTitle)}</td>
+      <td style="color:var(--text2)">${esc(r.callNum)}</td>
+      <td style="font-size:12px;max-width:240px;color:var(--text2)">${esc(r.summary)}</td>
+      <td style="font-size:12px;max-width:200px;color:var(--accent2)">${esc(r.nextAction)}</td>
+      <td><span class="badge ${badgeClass}">${esc(r.status) || '—'}</span></td>
+      <td style="color:var(--text2)">${esc(r.upcomingMtg) || '—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterClients(q) {
+  q = q.toLowerCase();
+  renderClientsTable(allRows.filter(r =>
+    (r.clientName||'').toLowerCase().includes(q) ||
+    (r.company||'').toLowerCase().includes(q) ||
+    (r.email||'').toLowerCase().includes(q)
+  ));
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`tab-${tab}`).classList.add('active');
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+}
+
+function showConfigBanner() {
+  document.getElementById('dashboard-body').innerHTML = `
+    <div class="config-banner">
+      <h3>🔧 Setup Required</h3>
+      <p>
+        To show live data, add your Google Sheets API key to <code>index.html</code>
+        (replace <code>REPLACE_WITH_YOUR_API_KEY</code> near the top of the &lt;script&gt;)
+        and make sure the Google Sheet is shared as <strong>"Anyone with the link can view"</strong>.
+        Then redeploy to Vercel.
+      </p>
+    </div>`;
+}
+
+function showError(msg) {
+  document.getElementById('error-container').innerHTML =
+    `<div class="error-banner">⚠️ ${esc(msg)}</div>`;
+}
+
+function clearError() {
+  document.getElementById('error-container').innerHTML = '';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
