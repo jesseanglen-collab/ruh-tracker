@@ -193,9 +193,10 @@
     #clients-table-wrap {
       overflow-x: auto; border-radius: var(--radius);
       border: 1px solid var(--border);
+      position: relative;
     }
 
-    #clients-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    #clients-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
 
     #clients-table th {
       background: var(--bg3); padding: 12px 14px; text-align: left;
@@ -207,6 +208,24 @@
       padding: 11px 14px;
       border-bottom: 1px solid var(--border); vertical-align: middle;
     }
+
+    /* Freeze first column (Client Name) */
+    #clients-table th:nth-child(2),
+    #clients-table td:nth-child(2) {
+      position: sticky;
+      left: 0;
+      z-index: 2;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      box-shadow: 2px 0 6px rgba(0,0,0,0.25);
+    }
+
+    #clients-table th:nth-child(2) {
+      background: var(--bg3);
+      z-index: 3;
+    }
+
+    #clients-table tr:hover td:nth-child(2) { background: #1e1e38; }
 
     #clients-table tr:last-child td { border-bottom: none; }
     #clients-table tr:hover td { background: rgba(108,99,255,0.06); }
