@@ -457,6 +457,7 @@
         <button class="filter-pill"        data-filter="7d"       onclick="setMeetingFilter('7d',this)">Last 7 Days</button>
         <button class="filter-pill"        data-filter="14d"      onclick="setMeetingFilter('14d',this)">Last 2 Weeks</button>
         <button class="filter-pill"        data-filter="30d"      onclick="setMeetingFilter('30d',this)">This Month</button>
+        <button class="filter-pill"        data-filter="upcoming" onclick="setMeetingFilter('upcoming',this)">Upcoming</button>
         <div class="filter-divider"></div>
         <button class="filter-pill"        data-filter="custom"   onclick="setMeetingFilter('custom',this)">📅 Custom Range</button>
 
@@ -744,6 +745,8 @@ function applyMeetingFilters() {
   } else if (activeMtgFilter === '30d') {
     const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() - 30);
     filtered = filtered.filter(r => parseDate(r.callDate) >= cutoff);
+  } else if (activeMtgFilter === 'upcoming') {
+    filtered = filtered.filter(r => parseDate(r.callDate) > today);
   } else if (activeMtgFilter === 'custom') {
     const fromVal = document.getElementById('date-from')?.value;
     const toVal   = document.getElementById('date-to')?.value;
