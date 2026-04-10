@@ -515,13 +515,13 @@
         <table class="data-table" id="clients-table">
           <thead>
             <tr>
-              <th>#</th><th>Client</th><th>Company</th><th>Email</th>
+              <th>#</th><th>Client</th><th>Company</th><th>Website</th><th>Email</th>
               <th>Last Call</th><th>Meeting Title</th><th>Call #</th>
               <th>Summary</th><th>Next Steps</th><th>Status</th><th>Days</th>
             </tr>
           </thead>
           <tbody id="clients-tbody">
-            <tr><td colspan="11" class="empty-msg"><div class="spinner" style="margin:auto"></div></td></tr>
+            <tr><td colspan="12" class="empty-msg"><div class="spinner" style="margin:auto"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -534,7 +534,7 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const SHEET_ID       = '1gOsHAXadupBdVhvxlz9IefRPSMEkd7ilglD3v9Nlw8E';
 const SHEETS_API_KEY = window.SHEETS_API_KEY || 'AIzaSyBK1fORzGnBKvRrfjkObfz_0B71KvKzZik';
-const SHEET_RANGE    = 'Sheet1!A1:P30';
+const SHEET_RANGE    = 'Sheet1!A1:P60';
 const REFRESH_MS     = 5 * 60 * 1000;
 
 // ── Column mapping (0-indexed) ────────────────────────────────────────────────
@@ -843,7 +843,7 @@ function applyCustomFilter() {
 function renderClientsTable(rows) {
   const tbody = document.getElementById('clients-tbody');
   if (!rows.length) {
-    tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">No clients found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">No clients found.</td></tr>';
     return;
   }
 
@@ -856,10 +856,15 @@ function renderClientsTable(rows) {
       'Upcoming':          'badge-upcoming',
     }[r.status] || 'badge-gray';
 
+    const websiteHtml = r.website
+      ? `<a href="${esc(r.website.startsWith('http') ? r.website : 'https://' + r.website)}" target="_blank" style="color:var(--accent2);font-size:11px">${esc(r.website)}</a>`
+      : '—';
+
     return `<tr>
       <td style="color:var(--text2)">${esc(r.sno)}</td>
       <td><strong>${esc(r.clientName)}</strong></td>
       <td>${esc(r.company)}</td>
+      <td>${websiteHtml}</td>
       <td style="font-family:monospace;font-size:11px">${esc(r.email)}</td>
       <td>${esc(r.callDate) || '—'}</td>
       <td style="color:var(--text2);font-size:12px;max-width:180px">${esc(r.meetingTitle)}</td>
