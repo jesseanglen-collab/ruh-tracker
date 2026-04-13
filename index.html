@@ -112,7 +112,7 @@
     /* ── Stats Grid ── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 16px;
       margin-bottom: 32px;
     }
@@ -124,15 +124,17 @@
       padding: 20px; text-align: center;
     }
 
-    .stat-card.hot { border-color: var(--hot); }
+    .stat-card.hot  { border-color: var(--hot); }
     .stat-card.warn { border-color: var(--warn); }
     .stat-card.info { border-color: var(--info); }
+    .stat-card.won  { border-color: var(--good); }
 
     .stat-value { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
     .stat-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-card.hot .stat-value { color: var(--hot); }
+    .stat-card.hot  .stat-value { color: var(--hot); }
     .stat-card.warn .stat-value { color: var(--warn); }
     .stat-card.info .stat-value { color: var(--info); }
+    .stat-card.won  .stat-value { color: var(--good); }
 
     /* ── Priority List ── */
     .section-title {
@@ -348,11 +350,12 @@
       font-size: 11px; font-weight: 600;
     }
 
-    .badge-hot      { background: rgba(255,68,68,0.15);  color: var(--hot); }
-    .badge-warn     { background: rgba(255,153,0,0.15);  color: var(--warn); }
-    .badge-active   { background: rgba(68,187,68,0.15);  color: var(--good); }
-    .badge-upcoming { background: rgba(68,136,255,0.15); color: var(--info); }
+    .badge-hot      { background: rgba(255,68,68,0.15);   color: var(--hot); }
+    .badge-warn     { background: rgba(255,153,0,0.15);   color: var(--warn); }
+    .badge-active   { background: rgba(68,187,68,0.15);   color: var(--good); }
+    .badge-upcoming { background: rgba(68,136,255,0.15);  color: var(--info); }
     .badge-gray     { background: rgba(144,144,176,0.15); color: var(--text2); }
+    .badge-won      { background: rgba(68,187,68,0.25);   color: #44ff88; border: 1px solid rgba(68,187,68,0.45); }
 
     /* ── Loading / Error ── */
     .loading-state {
@@ -395,7 +398,7 @@
       .logo-text, .nav-item span:not(.nav-icon), .sidebar-footer .refresh-info { display: none; }
       .logo { justify-content: center; padding: 0 0 24px; }
       .nav-item { justify-content: center; }
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
       #content { padding: 20px 16px; }
     }
   </style>
@@ -472,6 +475,17 @@
         <span class="result-count" id="meetings-count"></span>
       </div>
 
+      <!-- Status filter for meetings -->
+      <div class="filter-bar" id="meetings-status-filter-bar" style="margin-top:-6px;margin-bottom:14px">
+        <span class="filter-label" style="font-size:12px;color:var(--text2);white-space:nowrap">Stage:</span>
+        <button class="filter-pill active" onclick="setMeetingStatusFilter('all',this)">All</button>
+        <button class="filter-pill" onclick="setMeetingStatusFilter('Hot Lead',this)">🔴 Hot Lead</button>
+        <button class="filter-pill" onclick="setMeetingStatusFilter('Active',this)">🟢 Active</button>
+        <button class="filter-pill" onclick="setMeetingStatusFilter('Follow-up needed',this)">🟡 Follow-up</button>
+        <button class="filter-pill" onclick="setMeetingStatusFilter('Upcoming',this)">🔵 Upcoming</button>
+        <button class="filter-pill" onclick="setMeetingStatusFilter('Closed Won',this)">✅ Closed Won</button>
+      </div>
+
       <!-- Search within meetings -->
       <div class="table-toolbar">
         <input type="text" id="meetings-search" class="search-input"
@@ -506,10 +520,22 @@
       <div class="page-header">
         <h1>Clients</h1>
       </div>
+
+      <!-- Status filter for clients -->
+      <div class="filter-bar" id="clients-filter-bar" style="margin-bottom:14px">
+        <span class="filter-label" style="font-size:12px;color:var(--text2);white-space:nowrap">Stage:</span>
+        <button class="filter-pill active" onclick="setClientFilter('all',this)">All</button>
+        <button class="filter-pill" onclick="setClientFilter('Hot Lead',this)">🔴 Hot Lead</button>
+        <button class="filter-pill" onclick="setClientFilter('Active',this)">🟢 Active</button>
+        <button class="filter-pill" onclick="setClientFilter('Follow-up needed',this)">🟡 Follow-up</button>
+        <button class="filter-pill" onclick="setClientFilter('Upcoming',this)">🔵 Upcoming</button>
+        <button class="filter-pill" onclick="setClientFilter('Closed Won',this)">✅ Closed Won</button>
+      </div>
+
       <div class="table-toolbar">
         <input type="text" id="client-search" class="search-input"
           placeholder="Search by name, company, or email…"
-          oninput="filterClients(this.value)" />
+          oninput="applyClientFilters()" />
       </div>
       <div class="table-wrap">
         <table class="data-table" id="clients-table">
@@ -558,8 +584,10 @@ const COL = {
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
-let allRows         = [];
-let activeMtgFilter = 'all';
+let allRows              = [];
+let activeMtgFilter      = 'all';
+let activeMtgStatusFilter= 'all';
+let activeClientFilter   = 'all';
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.getElementById('today-label').textContent =
@@ -643,6 +671,7 @@ function renderDashboard(rows) {
   const followup  = rows.filter(r => r.status === 'Follow-up needed');
   const proposals = rows.filter(r => (r.proposalNeeded || '').toLowerCase() === 'yes' && r.status !== 'Upcoming');
   const upcoming  = rows.filter(r => r.status === 'Upcoming');
+  const closedWon = rows.filter(r => r.status === 'Closed Won');
 
   const priorities = [
     ...hot.map(r => ({ ...r, ptype: 'hot' })),
@@ -673,6 +702,10 @@ function renderDashboard(rows) {
       <div class="stat-card info">
         <div class="stat-value">${proposals.length}</div>
         <div class="stat-label">Proposals Pending</div>
+      </div>
+      <div class="stat-card won">
+        <div class="stat-value">${closedWon.length}</div>
+        <div class="stat-label">Closed Won ✅</div>
       </div>
     </div>
 
@@ -729,6 +762,13 @@ function setMeetingFilter(filter, btn) {
   applyMeetingFilters();
 }
 
+function setMeetingStatusFilter(filter, btn) {
+  activeMtgStatusFilter = filter;
+  document.querySelectorAll('#meetings-status-filter-bar .filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  applyMeetingFilters();
+}
+
 function applyMeetingFilters() {
   const today    = new Date(); today.setHours(0,0,0,0);
   const searchQ  = (document.getElementById('meetings-search')?.value || '').toLowerCase();
@@ -758,6 +798,11 @@ function applyMeetingFilters() {
       const toDate = new Date(toVal); toDate.setHours(23,59,59,999);
       filtered = filtered.filter(r => parseDate(r.callDate) <= toDate);
     }
+  }
+
+  // ── Status filter ──
+  if (activeMtgStatusFilter !== 'all') {
+    filtered = filtered.filter(r => r.status === activeMtgStatusFilter);
   }
 
   // ── Search filter ──
@@ -806,6 +851,7 @@ function renderMeetingsTable(rows) {
       'Follow-up':         'badge-warn',
       'Active':            'badge-active',
       'Upcoming':          'badge-upcoming',
+      'Closed Won':        'badge-won',
     }[r.status] || 'badge-gray';
 
     // colour the date badge
@@ -854,6 +900,7 @@ function renderClientsTable(rows) {
       'Follow-up':         'badge-warn',
       'Active':            'badge-active',
       'Upcoming':          'badge-upcoming',
+      'Closed Won':        'badge-won',
     }[r.status] || 'badge-gray';
 
     const websiteHtml = r.website
@@ -877,14 +924,30 @@ function renderClientsTable(rows) {
   }).join('');
 }
 
-function filterClients(q) {
-  q = q.toLowerCase();
-  renderClientsTable(allRows.filter(r =>
-    (r.clientName||'').toLowerCase().includes(q) ||
-    (r.company||'').toLowerCase().includes(q) ||
-    (r.email||'').toLowerCase().includes(q)
-  ));
+function setClientFilter(filter, btn) {
+  activeClientFilter = filter;
+  document.querySelectorAll('#clients-filter-bar .filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  applyClientFilters();
 }
+
+function applyClientFilters() {
+  const q = (document.getElementById('client-search')?.value || '').toLowerCase();
+  let filtered = [...allRows];
+  if (activeClientFilter !== 'all') {
+    filtered = filtered.filter(r => r.status === activeClientFilter);
+  }
+  if (q) {
+    filtered = filtered.filter(r =>
+      (r.clientName||'').toLowerCase().includes(q) ||
+      (r.company||'').toLowerCase().includes(q) ||
+      (r.email||'').toLowerCase().includes(q)
+    );
+  }
+  renderClientsTable(filtered);
+}
+
+function filterClients(q) { applyClientFilters(); }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function parseDate(str) {
