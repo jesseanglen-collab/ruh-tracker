@@ -532,6 +532,8 @@
         <button class="filter-pill" onclick="setClientFilter('Closed Won',this)">✅ Closed Won</button>
       </div>
 
+      <div id="closed-revenue-banner" style="display:none"></div>
+
       <div class="table-toolbar">
         <input type="text" id="client-search" class="search-input"
           placeholder="Search by name, company, or email…"
@@ -543,11 +545,11 @@
             <tr>
               <th>#</th><th>Client</th><th>Company</th><th>Website</th><th>Email</th>
               <th>Last Call</th><th>Meeting Title</th><th>Call #</th>
-              <th>Summary</th><th>Next Steps</th><th>Status</th><th>Days</th>
+              <th>Summary</th><th>Next Steps</th><th>Status</th><th>Days</th><th>Amount</th>
             </tr>
           </thead>
           <tbody id="clients-tbody">
-            <tr><td colspan="12" class="empty-msg"><div class="spinner" style="margin:auto"></div></td></tr>
+            <tr><td colspan="13" class="empty-msg"><div class="spinner" style="margin:auto"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -560,7 +562,7 @@
 // ── CONFIG ────────────────────────────────────────────────────────────────────
 const SHEET_ID       = '1gOsHAXadupBdVhvxlz9IefRPSMEkd7ilglD3v9Nlw8E';
 const SHEETS_API_KEY = window.SHEETS_API_KEY || 'AIzaSyBK1fORzGnBKvRrfjkObfz_0B71KvKzZik';
-const SHEET_RANGE    = 'Sheet1!A1:P60';
+const SHEET_RANGE    = 'Sheet1!A1:Q60';
 const REFRESH_MS     = 5 * 60 * 1000;
 
 // ── Column mapping (0-indexed) ────────────────────────────────────────────────
@@ -581,6 +583,7 @@ const COL = {
   followupStatus:13,
   daysSince:     14,
   upcomingMtg:   15,
+  dealAmount:    16,
 };
 
 // ── State ─────────────────────────────────────────────────────────────────────
@@ -639,6 +642,7 @@ async function loadData() {
         status:        r[COL.followupStatus]  || '',
         daysSince:     r[COL.daysSince]       || '',
         upcomingMtg:   r[COL.upcomingMtg]    || '',
+        dealAmount:    r[COL.dealAmount]      || '',
       }));
 
     renderDashboard(allRows);
@@ -703,9 +707,10 @@ function renderDashboard(rows) {
         <div class="stat-value">${proposals.length}</div>
         <div class="stat-label">Proposals Pending</div>
       </div>
-      <div class="stat-card won">
+      <div class="stat-card won" onclick="openClosedDeals()" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(68,187,68,0.25)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
         <div class="stat-value">${closedWon.length}</div>
         <div class="stat-label">Closed Won ✅</div>
+        <div style="font-size:11px;color:var(--good);margin-top:4px;opacity:0.8">Click to view →</div>
       </div>
     </div>
 
@@ -920,6 +925,7 @@ function renderClientsTable(rows) {
       <td style="font-size:12px;max-width:200px;color:var(--accent2)">${esc(r.nextAction)}</td>
       <td><span class="badge ${badgeClass}">${esc(r.status) || '—'}</span></td>
       <td style="color:var(--text2)">${esc(r.daysSince) || '—'}</td>
+      <td style="color:#44ff88;font-weight:600;white-space:nowrap">${esc(r.dealAmount) || '—'}</td>
     </tr>`;
   }).join('');
 }
@@ -944,10 +950,51 @@ function applyClientFilters() {
       (r.email||'').toLowerCase().includes(q)
     );
   }
+
+  // Show/hide revenue banner
+  const banner = document.getElementById('closed-revenue-banner');
+  if (activeClientFilter === 'Closed Won') {
+    const total = filtered.reduce((sum, r) => {
+      const n = parseInt((r.dealAmount||'').replace(/[^0-9]/g,'')) || 0;
+      return sum + n;
+    }, 0);
+    const totalFmt = total.toLocaleString('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 });
+    if (banner) banner.innerHTML = `
+      <div style="background:rgba(68,187,68,0.1);border:1px solid rgba(68,187,68,0.35);border-radius:10px;padding:14px 20px;margin-bottom:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+        <div style="display:flex;flex-direction:column">
+          <span style="font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em">Total Revenue Closed</span>
+          <span style="font-size:26px;font-weight:700;color:#44ff88">${totalFmt}</span>
+        </div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          ${filtered.map(r => r.dealAmount ? `
+            <div style="background:rgba(68,187,68,0.08);border:1px solid rgba(68,187,68,0.2);border-radius:8px;padding:8px 14px;min-width:140px">
+              <div style="font-size:12px;font-weight:600;color:var(--text)">${esc(r.clientName)}</div>
+              <div style="font-size:11px;color:var(--text2)">${esc(r.company)}</div>
+              <div style="font-size:16px;font-weight:700;color:#44ff88;margin-top:4px">${esc(r.dealAmount)}</div>
+              <div style="font-size:10px;color:var(--text2);margin-top:2px">${esc(r.callDate)}</div>
+            </div>` : '').join('')}
+        </div>
+      </div>`;
+    if (banner) banner.style.display = '';
+  } else {
+    if (banner) banner.style.display = 'none';
+  }
+
   renderClientsTable(filtered);
 }
 
 function filterClients(q) { applyClientFilters(); }
+
+// ── Open Closed Deals view ────────────────────────────────────────────────────
+function openClosedDeals() {
+  switchTab('clients');
+  // activate the Closed Won pill
+  const pills = document.querySelectorAll('#clients-filter-bar .filter-pill');
+  pills.forEach(p => p.classList.remove('active'));
+  pills.forEach(p => { if (p.textContent.includes('Closed Won')) p.classList.add('active'); });
+  activeClientFilter = 'Closed Won';
+  applyClientFilters();
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function parseDate(str) {
