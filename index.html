@@ -112,7 +112,7 @@
     /* ── Stats Grid ── */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 16px;
       margin-bottom: 32px;
     }
@@ -124,17 +124,21 @@
       padding: 20px; text-align: center;
     }
 
-    .stat-card.hot  { border-color: var(--hot); }
-    .stat-card.warn { border-color: var(--warn); }
-    .stat-card.info { border-color: var(--info); }
-    .stat-card.won  { border-color: var(--good); }
+    .stat-card.hot      { border-color: var(--hot); }
+    .stat-card.warn     { border-color: var(--warn); }
+    .stat-card.info     { border-color: var(--info); }
+    .stat-card.won      { border-color: var(--good); }
+    .stat-card.revenue  { border-color: #f0c040; }
+    .stat-card.monthly  { border-color: #c084fc; }
 
     .stat-value { font-size: 36px; font-weight: 700; margin-bottom: 4px; }
     .stat-label { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
-    .stat-card.hot  .stat-value { color: var(--hot); }
-    .stat-card.warn .stat-value { color: var(--warn); }
-    .stat-card.info .stat-value { color: var(--info); }
-    .stat-card.won  .stat-value { color: var(--good); }
+    .stat-card.hot     .stat-value { color: var(--hot); }
+    .stat-card.warn    .stat-value { color: var(--warn); }
+    .stat-card.info    .stat-value { color: var(--info); }
+    .stat-card.won     .stat-value { color: var(--good); }
+    .stat-card.revenue .stat-value { color: #f0c040; }
+    .stat-card.monthly .stat-value { color: #c084fc; }
 
     /* ── Priority List ── */
     .section-title {
@@ -677,6 +681,22 @@ function renderDashboard(rows) {
   const upcoming  = rows.filter(r => r.status === 'Upcoming');
   const closedWon = rows.filter(r => r.status === 'Closed Won');
 
+  // Revenue calculations
+  const parseDollar = s => parseInt((s||'').replace(/[^0-9]/g,'')) || 0;
+  const totalRevenue = closedWon.reduce((s, r) => s + parseDollar(r.dealAmount), 0);
+
+  const now = new Date();
+  const thisMonthClosed = closedWon.filter(r => {
+    const d = parseDate(r.callDate);
+    return d && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const monthRevenue = thisMonthClosed.reduce((s, r) => s + parseDollar(r.dealAmount), 0);
+
+  const fmtCurrency = n => n >= 1000
+    ? '$' + (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K'
+    : '$' + n.toLocaleString();
+  const monthName = now.toLocaleString('en-US', { month: 'short' });
+
   const priorities = [
     ...hot.map(r => ({ ...r, ptype: 'hot' })),
     ...followup.map(r => ({ ...r, ptype: 'warn' })),
@@ -711,6 +731,16 @@ function renderDashboard(rows) {
         <div class="stat-value">${closedWon.length}</div>
         <div class="stat-label">Closed Won ✅</div>
         <div style="font-size:11px;color:var(--good);margin-top:4px;opacity:0.8">Click to view →</div>
+      </div>
+      <div class="stat-card revenue" onclick="openClosedDeals()" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(240,192,64,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="stat-value">${fmtCurrency(totalRevenue)}</div>
+        <div class="stat-label">Total Revenue 💰</div>
+        <div style="font-size:11px;color:#f0c040;margin-top:4px;opacity:0.8">All time</div>
+      </div>
+      <div class="stat-card monthly" onclick="openClosedDeals()" style="cursor:pointer;transition:transform 0.15s,box-shadow 0.15s" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(192,132,252,0.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        <div class="stat-value">${fmtCurrency(monthRevenue)}</div>
+        <div class="stat-label">${monthName} Closed 📅</div>
+        <div style="font-size:11px;color:#c084fc;margin-top:4px;opacity:0.8">${thisMonthClosed.length} deal${thisMonthClosed.length !== 1 ? 's' : ''} this month</div>
       </div>
     </div>
 
